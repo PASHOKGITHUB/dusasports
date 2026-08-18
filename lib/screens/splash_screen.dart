@@ -22,20 +22,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 700),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    _scaleAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.7, curve: Curves.easeIn)),
+      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.8, curve: Curves.easeIn)),
     );
 
     _controller.forward();
 
-    Future.delayed(const Duration(milliseconds: 800), () {
+    Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
         final provider = Provider.of<BookingProvider>(context, listen: false);
         Navigator.of(context).pushReplacement(
@@ -45,7 +45,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
-            transitionDuration: const Duration(milliseconds: 300),
+            transitionDuration: const Duration(milliseconds: 400),
           ),
         );
       }
@@ -61,12 +61,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF0F172A),
-              Color(0xFF020617),
+              Color(0xFFFFFFFF),
+              Color(0xFFF1F5F9),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -75,12 +76,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // Soft branded background glow
             Container(
-              width: 300,
-              height: 300,
+              width: 260,
+              height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFFF4C00).withOpacity(0.12),
+                color: const Color(0xFFFF4C00).withOpacity(0.06),
               ),
             ),
 
@@ -94,44 +96,55 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/logo.png',
-                          width: 140,
-                          height: 140,
-                          fit: BoxFit.contain,
-                          errorBuilder: (c, e, s) => Container(
-                            width: 100,
-                            height: 100,
-                            decoration: const BoxDecoration(
+                        Container(
+                          width: 110,
+                          height: 110,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFFF4C00).withOpacity(0.12),
+                                blurRadius: 24,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                          ),
+                          child: Image.asset(
+                            'assets/logo.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (c, e, s) => const Icon(
+                              Icons.sports_tennis_rounded,
                               color: Color(0xFFFF4C00),
-                              shape: BoxShape.circle,
+                              size: 54,
                             ),
-                            child: const Icon(Icons.sports, color: Colors.white, size: 50),
                           ),
                         ),
                         const SizedBox(height: 24),
                         Text(
                           'DUSA SPORTS',
                           style: GoogleFonts.outfit(
-                            fontSize: 32,
+                            fontSize: 30,
                             fontWeight: FontWeight.w900,
-                            color: Colors.white,
+                            color: const Color(0xFF0F172A),
                             letterSpacing: 2,
                           ),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           'SPORTS ACADEMY & WELLNESS',
                           style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
                             color: const Color(0xFFFF4C00),
-                            letterSpacing: 3,
+                            letterSpacing: 2.5,
                           ),
                         ),
-                        const SizedBox(height: 36),
+                        const SizedBox(height: 40),
                         const SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 22,
+                          height: 22,
                           child: CircularProgressIndicator(
                             color: Color(0xFFFF4C00),
                             strokeWidth: 2.5,

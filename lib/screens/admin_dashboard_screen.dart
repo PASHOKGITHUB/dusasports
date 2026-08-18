@@ -695,7 +695,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // --- TAB 1: Dashboard ---
   Widget _buildDashboardTab(BookingProvider provider) {
     final filter = provider.adminDateFilter;
-    String revenueText = filter == 'Today' ? '₹8,450' : (filter == 'Yesterday' ? '₹7,730' : (filter == 'This Week' ? '₹54,200' : '₹1,84,200'));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -703,190 +702,626 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 💰 Today's Revenue Clickable Card
-          InkWell(
-            onTap: _showTodayTransactionsDialog,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [Color(0xFF0F172A), Color(0xFF1E293B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [BoxShadow(color: const Color(0xFFFF4C00).withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4))],
-              ),
+          // 1. Executive Summary (Top KPI Cards)
+          _buildExecutiveSummaryCard(filter),
+
+          const SizedBox(height: 16),
+
+          // 2. Monthly P&L Table
+          _buildMonthlyPnLCard(filter),
+
+          const SizedBox(height: 16),
+
+          // 3. Court Utilization Table (Critical for DUSA)
+          _buildCourtUtilizationCard(filter),
+
+          const SizedBox(height: 16),
+
+          // 4. Facility Occupancy
+          _buildFacilityOccupancyCard(),
+
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+
+  // --- SECTION 1: Executive Summary Cards ---
+  Widget _buildExecutiveSummaryCard(String filter) {
+    final List<Map<String, dynamic>> kpis = [
+      {'kpi': 'Total Revenue', 'current': '₹25,00,000', 'target': '₹28,00,000', 'status': 'On Track', 'icon': Icons.payments_rounded, 'color': const Color(0xFF10B981)},
+      {'kpi': 'Net Profit', 'current': '₹9,00,000', 'target': '₹10,00,000', 'status': 'On Track', 'icon': Icons.trending_up_rounded, 'color': const Color(0xFF0EA5E9)},
+      {'kpi': 'Profit Margin %', 'current': '36%', 'target': '35%', 'status': 'Exceeded', 'icon': Icons.pie_chart_rounded, 'color': const Color(0xFF8B5CF6)},
+      {'kpi': 'Active Members', 'current': '1,250', 'target': '1,300', 'status': '96% Goal', 'icon': Icons.card_membership_rounded, 'color': const Color(0xFF06B6D4)},
+      {'kpi': 'New Enrollments', 'current': '145', 'target': '150', 'status': '97% Goal', 'icon': Icons.person_add_alt_1_rounded, 'color': const Color(0xFFF59E0B)},
+      {'kpi': 'Member Retention %', 'current': '88%', 'target': '85%', 'status': 'Exceeded', 'icon': Icons.loop_rounded, 'color': const Color(0xFF14B8A6)},
+      {'kpi': 'Court Utilization %', 'current': '84%', 'target': '80%', 'status': 'Exceeded', 'icon': Icons.sports_tennis_rounded, 'color': const Color(0xFFEC4899)},
+      {'kpi': 'Customer Satisfaction', 'current': '4.7/5', 'target': '4.5/5', 'status': 'Exceeded', 'icon': Icons.star_rounded, 'color': const Color(0xFF3B82F6)},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Executive Summary',
+                    style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                  ),
+                  Text(
+                    'Key performance indicators & monthly target benchmarks',
+                    style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                InkWell(
+                  onTap: _showTodayTransactionsDialog,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.receipt_long_rounded, size: 13, color: Color(0xFF10B981)),
+                        const SizedBox(width: 4),
+                        Text('Receipts', style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF10B981))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: _showFullMembersListSheet,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFF3B82F6).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.people_outline_rounded, size: 13, color: Color(0xFF3B82F6)),
+                        const SizedBox(width: 4),
+                        Text('Members', style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF3B82F6))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => _showInfoDialog(
+                    title: 'Executive Summary (Top KPIs)',
+                    explanation: 'High-level operational and financial KPIs comparing current performance to monthly target goals.',
+                    calculation: 'Real-time aggregation from POS, membership registrations, and court booking engines.',
+                    recommendation: 'Track status badges daily to maintain healthy club profitability and member retention.',
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(color: const Color(0xFFFF4C00).withOpacity(0.08), shape: BoxShape.circle),
+                    child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFFF4C00)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Grid of modern KPI cards (2 columns layout)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final double cardWidth = (constraints.maxWidth - 12) / 2;
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: kpis.map((k) {
+                final Color themeColor = k['color'] as Color;
+                return Container(
+                  width: cardWidth,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 6, offset: const Offset(0, 2)),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(7),
+                            decoration: BoxDecoration(color: themeColor.withOpacity(0.12), borderRadius: BorderRadius.circular(10)),
+                            child: Icon(k['icon'] as IconData, size: 18, color: themeColor),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: themeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                            child: Text(
+                              k['status'],
+                              style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.bold, color: themeColor),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        k['kpi'],
+                        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF64748B)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        k['current'],
+                        style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.outlined_flag_rounded, size: 11, color: Color(0xFF94A3B8)),
+                          const SizedBox(width: 3),
+                          Expanded(
+                            child: Text(
+                              'Target: ${k['target']}',
+                              style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // --- SECTION 2: Monthly P&L Cards ---
+  Widget _buildMonthlyPnLCard(String filter) {
+    final List<Map<String, dynamic>> expenses = [
+      {'category': 'Staff Salary', 'amount': '₹8,00,000', 'percent': 0.50, 'color': const Color(0xFF3B82F6), 'icon': Icons.badge_outlined},
+      {'category': 'Rent/EMI', 'amount': '₹3,00,000', 'percent': 0.187, 'color': const Color(0xFF8B5CF6), 'icon': Icons.business_outlined},
+      {'category': 'Maintenance', 'amount': '₹1,50,000', 'percent': 0.093, 'color': const Color(0xFFF59E0B), 'icon': Icons.build_outlined},
+      {'category': 'Electricity', 'amount': '₹1,20,000', 'percent': 0.075, 'color': const Color(0xFFEC4899), 'icon': Icons.bolt_outlined},
+      {'category': 'Other Expenses', 'amount': '₹1,00,000', 'percent': 0.062, 'color': const Color(0xFF64748B), 'icon': Icons.more_horiz_outlined},
+      {'category': 'Marketing', 'amount': '₹75,000', 'percent': 0.047, 'color': const Color(0xFF06B6D4), 'icon': Icons.campaign_outlined},
+      {'category': 'Equipment Cost', 'amount': '₹50,000', 'percent': 0.031, 'color': const Color(0xFF14B8A6), 'icon': Icons.fitness_center_outlined},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Monthly P&L Summary',
+                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+              ),
+              InkWell(
+                onTap: () => _showInfoDialog(
+                  title: 'Monthly Profit & Loss (P&L)',
+                  explanation: 'Breakdown of total revenues against operational expenses including payroll, rent, utilities, and maintenance.',
+                  calculation: 'Net Profit = Total Revenue (₹25,00,000) - Total Expenses (₹16,00,000).',
+                  recommendation: 'Target a profit margin above 35% by keeping utility & maintenance costs optimized.',
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: const Color(0xFFFF4C00).withOpacity(0.08), shape: BoxShape.circle),
+                  child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFFF4C00)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // P&L Net Profit Highlight Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Total Revenue', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
+                        Text('₹25,00,000', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                      ],
+                    ),
+                    Container(width: 1, height: 30, color: const Color(0xFF334155)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Total Expenses', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
+                        Text('₹16,00,000', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFFFCA5A5))),
+                      ],
+                    ),
+                    Container(width: 1, height: 30, color: const Color(0xFF334155)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('Net Profit (36%)', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF6EE7B7))),
+                        Text('₹9,00,000', style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: const Color(0xFF34D399))),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: SizedBox(
+                    height: 6,
+                    child: Row(
+                      children: [
+                        Expanded(flex: 64, child: Container(color: const Color(0xFFEF4444))),
+                        Expanded(flex: 36, child: Container(color: const Color(0xFF10B981))),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('64% Expenses Ratio', style: GoogleFonts.inter(fontSize: 9.5, color: const Color(0xFF94A3B8))),
+                    Text('36% Net Profit Margin', style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF34D399))),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          Text('Expense Breakdown (₹16,00,000 Total)', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF475569))),
+          const SizedBox(height: 10),
+
+          // Expense category visual bars
+          ...expenses.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(e['icon'] as IconData, size: 14, color: e['color'] as Color),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            e['category'],
+                            style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF0F172A)),
+                          ),
+                        ),
+                        Text(
+                          e['amount'],
+                          style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: e['percent'] as double,
+                        minHeight: 6,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        color: e['color'] as Color,
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
+  // --- SECTION 3: Court Utilization Cards ---
+  Widget _buildCourtUtilizationCard(String filter) {
+    final List<Map<String, dynamic>> courts = [
+      {'name': 'Court 1', 'available': 300, 'booked': 260, 'utilization': '87%', 'percent': 0.87, 'status': 'High Demand', 'color': const Color(0xFF10B981)},
+      {'name': 'Court 2', 'available': 300, 'booked': 220, 'utilization': '73%', 'percent': 0.73, 'status': 'Optimal', 'color': const Color(0xFF3B82F6)},
+      {'name': 'Court 3', 'available': 300, 'booked': 250, 'utilization': '83%', 'percent': 0.83, 'status': 'High Demand', 'color': const Color(0xFF10B981)},
+      {'name': 'Court 4', 'available': 300, 'booked': 275, 'utilization': '92%', 'percent': 0.92, 'status': '🔥 Peak Capacity', 'color': const Color(0xFFFF4C00)},
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Badminton Court Utilization',
+                    style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: const Color(0xFFFF4C00).withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                    child: Text(
+                      '⚡ Critical Operation Matrix for DUSA',
+                      style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00)),
+                    ),
+                  ),
+                ],
+              ),
+              InkWell(
+                onTap: () => _showInfoDialog(
+                  title: 'Badminton Court Utilization',
+                  explanation: 'Tracks total available operating hours vs actual booked playing hours across all 4 synthetic courts.',
+                  calculation: 'Utilization = Booked Hours ÷ Available Hours (300 hrs/month/court).',
+                  recommendation: 'Court 4 is at 92% peak capacity; consider shifting peak evening rates to balance load to Court 2 (73%).',
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: const Color(0xFFFF4C00).withOpacity(0.08), shape: BoxShape.circle),
+                  child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFFF4C00)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Court visual cards list
+          ...courts.map((c) {
+            final Color themeColor = c['color'] as Color;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Today\'s Live Revenue ($filter)', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8))),
                       Row(
                         children: [
-                          Text('View Receipts ➔', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00))),
-                          const SizedBox(width: 4),
-                          InkWell(
-                            onTap: () => _showInfoDialog(
-                              title: 'Today\'s Live Revenue Metric',
-                              explanation: 'Reflects today\'s pay-per-play court slot rentals and Aadukalam Café purchases.',
-                              calculation: 'Badminton Court Hourly Rentals + Aadukalam Café Pre-Orders.',
-                              recommendation: 'Tap this card anytime to view full line-item receipts for today\'s payments.',
-                            ),
-                            child: const Icon(Icons.info_outline_rounded, size: 16, color: Colors.white70),
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(color: themeColor.withOpacity(0.12), shape: BoxShape.circle),
+                            child: Icon(Icons.sports_tennis, size: 16, color: themeColor),
                           ),
+                          const SizedBox(width: 8),
+                          Text(c['name'], style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: themeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(6)),
+                            child: Text(c['status'], style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: themeColor)),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(c['utilization'], style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
                         ],
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(revenueText, style: GoogleFonts.outfit(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
-                  const SizedBox(height: 4),
-                  Text('▲ +9.2% vs yesterday • Click to view transaction log', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF10B981))),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 🥤 Café Stats Summary
-          _buildLightSectionCard(
-            title: '🥤 Aadukalam Café Performance ($filter)',
-            subtitle: 'Pre-orders, best sellers, and kitchen prep volume',
-            infoTitle: 'Café Performance Summary',
-            infoExplanation: 'Shows revenue and order counts generated by the internal health café.',
-            infoCalculation: 'Sum of Café Order Receipts.',
-            infoRecommendation: 'Pre-order shakes during court booking checkout for peak revenue.',
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildModalStat('Café Revenue', '₹23,600', const Color(0xFFF59E0B)),
-                Container(width: 1, height: 30, color: const Color(0xFFE2E8F0)),
-                _buildModalStat('Orders Placed', '42 Orders', const Color(0xFF3B82F6)),
-                Container(width: 1, height: 30, color: const Color(0xFFE2E8F0)),
-                _buildModalStat('Top Selling', 'Whey Shake', const Color(0xFFFF4C00)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Department Revenue Share
-          _buildLightSectionCard(
-            title: '📊 Department Revenue Share',
-            subtitle: 'Category-wise earnings breakdown',
-            infoTitle: 'Department Revenue Share',
-            infoExplanation: 'Percentage split across Badminton, Gym, Café, and PT.',
-            infoCalculation: 'Category Revenue ÷ Total Revenue.',
-            infoRecommendation: 'Badminton generates the primary daily transaction volume.',
-            child: Column(
-              children: [
-                _buildLightRevenueBar('Badminton Court Rentals', '₹84,500', 0.46, const Color(0xFFFF4C00)),
-                const SizedBox(height: 10),
-                _buildLightRevenueBar('Gym & Swimming Memberships', '₹62,100', 0.34, const Color(0xFF3B82F6)),
-                const SizedBox(height: 10),
-                _buildLightRevenueBar('Aadukalam Health Café', '₹23,600', 0.13, const Color(0xFFF59E0B)),
-                const SizedBox(height: 10),
-                _buildLightRevenueBar('Personal Training & Sauna', '₹14,000', 0.07, const Color(0xFF10B981)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 👥 MEMBERS SECTION (SIMPLE NAME & VIEW ALL BUTTON)
-          _buildLightSectionCard(
-            title: '👥 Members',
-            subtitle: 'Active members & attendance status overview',
-            infoTitle: 'Member Overview',
-            infoExplanation: 'Displays active, expiring, and expired member counts.',
-            infoCalculation: 'Count of members in database.',
-            infoRecommendation: 'Tap "View All Members" below to search or view full profile details.',
-            child: Column(
-              children: [
-                // 3 Equal-Sized Metric Cards Row
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: c['percent'] as double,
+                      minHeight: 7,
+                      backgroundColor: const Color(0xFFE2E8F0),
+                      color: themeColor,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: _buildEqualMetricCard('Active', '1,248', '▲ +18.4%', const Color(0xFF10B981)),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildEqualMetricCard('Expiring', '28', 'In 7 Days', const Color(0xFFF59E0B)),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _buildEqualMetricCard('Expired', '45', 'Win-Back', const Color(0xFFEF4444)),
-                      ),
+                      Text('Available: ${c['available']} hrs/mo', style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B))),
+                      Text('Booked: ${c['booked']} hrs', style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF334155))),
                     ],
                   ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  // --- SECTION 4: Facility Occupancy Cards ---
+  Widget _buildFacilityOccupancyCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 8, offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Facility Occupancy',
+                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+              ),
+              InkWell(
+                onTap: () => _showInfoDialog(
+                  title: 'Facility Occupancy',
+                  explanation: 'Monitors member traffic in non-court amenities including the Olympic-size Swimming Pool and Evost Gym area.',
+                  calculation: 'Check-in scans logged via member QR codes at entry turnstiles.',
+                  recommendation: 'Schedule extra fitness trainers during peak gym hours (6 AM - 9 AM & 5 PM - 9 PM).',
                 ),
-                const SizedBox(height: 14),
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(color: const Color(0xFFFF4C00).withOpacity(0.08), shape: BoxShape.circle),
+                  child: const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFFFF4C00)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
 
-                // Member Roster Preview List
-                ..._membersList.take(3).map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: InkWell(
-                        onTap: () => _showMemberDetailsModal(m),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 15,
-                                    backgroundColor: const Color(0xFFFF4C00).withOpacity(0.12),
-                                    child: Text((m['name'] as String).substring(0, 1), style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00))),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(m['name'], style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-                                      Text('${m['plan']} • ${m['expiryDate']}', style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B))),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8), size: 18),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )),
-                const SizedBox(height: 8),
-
-                // View All Members Button
-                InkWell(
-                  onTap: _showFullMembersListSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF4C00).withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFFF4C00).withOpacity(0.3)),
+          // Swimming Pool Usage Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF0F9FF),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFBAE6FD)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(color: Color(0xFF0284C7), shape: BoxShape.circle),
+                      child: const Icon(Icons.pool_rounded, color: Colors.white, size: 20),
                     ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('View All Members Directory', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00))),
-                          const SizedBox(width: 6),
-                          const Icon(Icons.arrow_forward_rounded, size: 14, color: Color(0xFFFF4C00)),
+                          Text('Swimming Pool Usage', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                          const SizedBox(height: 2),
+                          Text('312 / 400 Available Hours Booked', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
                         ],
                       ),
                     ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('78%', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFF0284C7))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFF0284C7).withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+                          child: Text('Optimal', style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFF0369A1))),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    value: 0.78,
+                    minHeight: 6,
+                    backgroundColor: Color(0xFFE0F2FE),
+                    color: Color(0xFF0284C7),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 12),
+
+          // Gym Usage Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDF2F8),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFFBCFE8)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: const BoxDecoration(color: Color(0xFFDB2777), shape: BoxShape.circle),
+                      child: const Icon(Icons.fitness_center_rounded, color: Colors.white, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Gym Usage', style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                          const SizedBox(height: 2),
+                          Text('Peak: 6:00-9:00 AM & 5:00-9:00 PM', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
+                        ],
+                      ),
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text('85%', style: GoogleFonts.outfit(fontSize: 20, fontWeight: FontWeight.bold, color: const Color(0xFFDB2777))),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: const Color(0xFFDB2777).withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
+                          child: Text('High Demand', style: GoogleFonts.inter(fontSize: 9.5, fontWeight: FontWeight.bold, color: const Color(0xFFBE185D))),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: const LinearProgressIndicator(
+                    value: 0.85,
+                    minHeight: 6,
+                    backgroundColor: Color(0xFFFCE7F3),
+                    color: Color(0xFFDB2777),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
