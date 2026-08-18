@@ -111,6 +111,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 0. ADMIN MODE SWITCHER BANNER CARD
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFFF4C00).withOpacity(0.6), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFF4C00).withOpacity(0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF4C00).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFFFF4C00), size: 22),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Admin Console Mode',
+                          style: GoogleFonts.outfit(fontSize: 14.5, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        Text(
+                          provider.isAdminMode ? 'Active: Executive Admin View' : 'Switch to view revenue & reports',
+                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                Switch(
+                  value: provider.isAdminMode,
+                  activeColor: const Color(0xFFFF4C00),
+                  activeTrackColor: const Color(0xFFFF4C00).withOpacity(0.3),
+                  inactiveThumbColor: const Color(0xFF94A3B8),
+                  inactiveTrackColor: const Color(0xFF334155),
+                  onChanged: (val) {
+                    provider.toggleAdminMode();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(val ? 'Switched to Executive Admin Console ⚡' : 'Switched to Member View 👋'),
+                        backgroundColor: const Color(0xFFFF4C00),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // 1. Digital Membership Card (Swiggy Premium gradient)
           _buildMembershipCard(provider),
           const SizedBox(height: 20),
@@ -611,6 +681,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 12),
         ...provider.cafeOrders.map((order) {
+          final String orderId = (order['orderId'] ?? order['id'] ?? 'ORD-000').toString();
+          final String status = (order['status'] ?? 'Completed').toString();
+          final String itemText = (order['item'] ?? (order['items'] != null ? order['items'].toString() : 'Café Item')).toString();
+          final String dateText = (order['date'] ?? order['time'] ?? 'Today').toString();
+          final String amount = (order['amount'] ?? '').toString();
+
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.all(12),
@@ -626,7 +702,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      order['id'],
+                      orderId,
                       style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00)),
                     ),
                     Container(
@@ -636,20 +712,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        order['status'],
+                        status,
                         style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: const Color(0xFFD97706)),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                ... (order['items'] as Map<String, int>).entries.map((entry) => Text(
-                  '• ${entry.key} x${entry.value}',
+                Text(
+                  '• $itemText ${amount.isNotEmpty ? "($amount)" : ""}',
                   style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF475569)),
-                )),
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  'Scheduled pickup: ${order['time']}',
+                  'Date: $dateText',
                   style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B)),
                 ),
               ],
@@ -691,8 +767,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             itemCount: provider.enquiries.length,
             itemBuilder: (context, index) {
               final enq = provider.enquiries[index];
-              final dateStr = (enq['timestamp'] as DateTime).toLocal().toString().split('.')[0];
-              
+              final String title = (enq['category'] ?? enq['plan'] ?? 'General Enquiry').toString();
+              final String status = (enq['status'] ?? 'Pending').toString();
+              final String note = (enq['note'] ?? enq['subPlan'] ?? '').toString();
+              final String dateStr = (enq['date'] ?? (enq['timestamp'] != null ? enq['timestamp'].toString() : 'Today')).toString();
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(12),
@@ -708,7 +787,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          enq['plan'],
+                          title,
                           style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                         ),
                         Container(
@@ -718,22 +797,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            enq['status'] ?? 'Received',
+                            status,
                             style: GoogleFonts.inter(fontSize: 8.5, fontWeight: FontWeight.bold, color: const Color(0xFF16A34A)),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'Sub-option: ${enq['subPlan']}',
-                      style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
-                    ),
-                    if (enq['slots'] != null && (enq['slots'] as List).isNotEmpty) ...[
-                      const SizedBox(height: 4),
+                    if (note.isNotEmpty) ...[
+                      const SizedBox(height: 6),
                       Text(
-                        'Slots: ${(enq['slots'] as List).join(", ")}',
-                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFFFF4C00)),
+                        'Details: $note',
+                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
                       ),
                     ],
                     const SizedBox(height: 6),

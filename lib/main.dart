@@ -24,6 +24,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
+          canvasColor: Colors.white,
+          cardColor: Colors.white,
+          dialogBackgroundColor: Colors.white,
           textSelectionTheme: const TextSelectionThemeData(
             cursorColor: Color(0xFFFF4C00),
             selectionHandleColor: Color(0xFFFF4C00),
@@ -35,12 +38,12 @@ class MyApp extends StatelessWidget {
       theme: ShadThemeData(
         brightness: Brightness.light,
         colorScheme: const ShadSlateColorScheme.light(
-          background: Color(0xFFF8FAFC), // Cool clean off-white background
+          background: Color(0xFFF8FAFC),
           foreground: Color(0xFF0F172A),
-          card: Colors.white, // Pure white cards
+          card: Colors.white,
           popover: Colors.white,
-          border: Color(0xFFE2E8F0), // Clean grey borders
-          primary: Color(0xFFFF4C00), // DUSA Sports Orange
+          border: Color(0xFFE2E8F0),
+          primary: Color(0xFFFF4C00),
           primaryForeground: Colors.white,
           secondary: Color(0xFF1F2937),
           secondaryForeground: Colors.white,
@@ -64,17 +67,46 @@ class MyApp extends StatelessWidget {
 }
 
 class BookingProvider extends ChangeNotifier {
-  String _selectedPlan = 'Gold';
+  String _selectedPlan = 'Gold Pass';
   String _selectedSubPlan = '1 Year';
 
   // Onboarding & Profile details
   bool _isOnboarded = false;
-  String _profileName = 'Guest Player';
-  String _profileMobile = '';
-  String _profileEmail = '';
-  String _activeMembership = 'No Active Plan';
-  String _memberId = 'DUSA-NEW-MEMBER';
+  bool _isAdminMode = false;
+  String _adminDateFilter = 'Today';
+  String _profileName = 'Ashok Kumar';
+  String _profileMobile = '+91 98765 43210';
+  String _profileEmail = 'ashok@dusasports.com';
+  String _activeMembership = 'Gold Annual Pass';
+  String _memberId = 'DUSA-2026-9842';
   int _selectedFacilityTab = 0;
+
+  // Streaks & Badges
+  int _gymStreak = 14;
+  int _badmintonStreak = 8;
+  int _swimStreak = 5;
+  final List<String> _unlockedBadges = ['Early Bird 🌅', '10-Day Streak 🔥', 'Badminton Ace 🏸', 'Café VIP 🥤'];
+
+  // Café Cart
+  final Map<String, int> _cafeCart = {};
+
+  // Café Orders
+  final List<Map<String, dynamic>> _cafeOrders = [
+    {
+      'orderId': 'ORD-8942',
+      'item': '1x Whey Protein Shake (Choco)',
+      'amount': '₹120',
+      'date': 'Today @ 06:30 PM',
+      'status': 'Completed',
+    },
+    {
+      'orderId': 'ORD-8710',
+      'item': '2x Berry Hydration Smoothie',
+      'amount': '₹240',
+      'date': 'Yesterday @ 07:15 PM',
+      'status': 'Completed',
+    },
+  ];
 
   // Enquiry Details
   final List<Map<String, dynamic>> _enquiries = [];
@@ -92,75 +124,126 @@ class BookingProvider extends ChangeNotifier {
 
   // Dynamic Calculator Config
   bool _includeGym = true;
-  int _gymMonths = 12; // 1, 3, 6, 12
+  int _gymMonths = 12;
   bool _includeSwimming = false;
   bool _includeCoaching = false;
   bool _includeSauna = false;
 
-  // Aadukalam Café Cart State
-  final Map<String, int> _cafeCart = {};
-  final List<Map<String, dynamic>> _cafeOrders = [];
-
-  // Gamification State
-  int _gymStreak = 0;
-  int _badmintonStreak = 0;
-  int _swimStreak = 0;
-  final Set<String> _unlockedBadges = {};
-
   // Getters
-  bool get isOnboarded => _isOnboarded;
   String get selectedPlan => _selectedPlan;
   String get selectedSubPlan => _selectedSubPlan;
+  bool get isOnboarded => _isOnboarded;
+  bool get isAdminMode => _isAdminMode;
+  String get adminDateFilter => _adminDateFilter;
   String get profileName => _profileName;
   String get profileMobile => _profileMobile;
   String get profileEmail => _profileEmail;
   String get activeMembership => _activeMembership;
   String get memberId => _memberId;
+  int get selectedFacilityTab => _selectedFacilityTab;
+  int get gymStreak => _gymStreak;
+  int get badmintonStreak => _badmintonStreak;
+  int get swimStreak => _swimStreak;
+  List<String> get unlockedBadges => _unlockedBadges;
+  Map<String, int> get cafeCart => _cafeCart;
+  List<Map<String, dynamic>> get cafeOrders => _cafeOrders;
   List<Map<String, dynamic>> get enquiries => _enquiries;
   Set<String> get selectedCourtSlots => _selectedCourtSlots;
   List<Map<String, String>> get chatMessages => _chatMessages;
-  
+
   bool get includeGym => _includeGym;
   int get gymMonths => _gymMonths;
   bool get includeSwimming => _includeSwimming;
   bool get includeCoaching => _includeCoaching;
   bool get includeSauna => _includeSauna;
 
-  Map<String, int> get cafeCart => _cafeCart;
-  List<Map<String, dynamic>> get cafeOrders => _cafeOrders;
+  // Pricing Logic
+  int get calculatedTotal {
+    int total = 0;
+    if (_includeGym) {
+      if (_gymMonths == 1) total += 2500;
+      else if (_gymMonths == 3) total += 6500;
+      else if (_gymMonths == 6) total += 11000;
+      else if (_gymMonths == 12) total += 18000;
+    }
+    if (_includeSwimming) total += (_gymMonths * 1200);
+    if (_includeCoaching) total += (_gymMonths * 2000);
+    if (_includeSauna) total += 1500;
 
-  int get gymStreak => _gymStreak;
-  int get badmintonStreak => _badmintonStreak;
-  int get swimStreak => _swimStreak;
-  Set<String> get unlockedBadges => _unlockedBadges;
-  int get selectedFacilityTab => _selectedFacilityTab;
+    return total;
+  }
 
-  // Setters & Actions
-  void onboardUser({required String name, required String mobile, required String email}) {
-    _profileName = name;
-    _profileMobile = mobile;
-    _profileEmail = email;
-    _activeMembership = 'Platinum Plan (Annual)';
-    _memberId = 'DUSA-2026-${(1000 + (name.hashCode % 9000)).abs()}';
-    _gymStreak = 8;
-    _badmintonStreak = 4;
-    _unlockedBadges.addAll({'Early Bird', 'Gym Warrior', 'Hydration Hero'});
-    _isOnboarded = true;
+  void toggleGym(bool val) { _includeGym = val; notifyListeners(); }
+  void setGymMonths(int months) { _gymMonths = months; notifyListeners(); }
+  void toggleSwimming(bool val) { _includeSwimming = val; notifyListeners(); }
+  void toggleCoaching(bool val) { _includeCoaching = val; notifyListeners(); }
+  void toggleSauna(bool val) { _includeSauna = val; notifyListeners(); }
+
+  void addCafeItem(String item) {
+    _cafeCart[item] = (_cafeCart[item] ?? 0) + 1;
     notifyListeners();
   }
 
-  void purchaseMembership({required String plan, required String duration}) {
-    _activeMembership = '$plan ($duration)';
-    if (_memberId == 'DUSA-NEW-MEMBER' || _memberId.isEmpty) {
-      _memberId = 'DUSA-2026-${(1000 + (_profileName.hashCode % 9000)).abs()}';
+  void removeCafeItem(String item) {
+    if (_cafeCart.containsKey(item)) {
+      if (_cafeCart[item]! > 1) {
+        _cafeCart[item] = _cafeCart[item]! - 1;
+      } else {
+        _cafeCart.remove(item);
+      }
+      notifyListeners();
     }
-    if (plan.contains('Booking') || plan.contains('Court')) {
-      _selectedCourtSlots.clear();
+  }
+
+  void placeCafeOrder([String? item]) {
+    if (item != null) {
+      _cafeOrders.insert(0, {
+        'orderId': 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}',
+        'item': item,
+        'amount': '₹180',
+        'date': 'Just Now',
+        'status': 'Preparing',
+      });
+    } else if (_cafeCart.isNotEmpty) {
+      final String summary = _cafeCart.entries.map((e) => '${e.value}x ${e.key}').join(', ');
+      _cafeOrders.insert(0, {
+        'orderId': 'ORD-${DateTime.now().millisecondsSinceEpoch.toString().substring(9)}',
+        'item': summary,
+        'amount': '₹180',
+        'date': 'Just Now',
+        'status': 'Preparing',
+      });
+      _cafeCart.clear();
     }
+    notifyListeners();
+  }
+
+  void toggleCourtSlot(String slotId) {
+    if (_selectedCourtSlots.contains(slotId)) {
+      _selectedCourtSlots.remove(slotId);
+    } else {
+      _selectedCourtSlots.add(slotId);
+    }
+    notifyListeners();
+  }
+
+  void clearCourtSlots() {
+    _selectedCourtSlots.clear();
+    notifyListeners();
+  }
+
+  void clearSelectedSlots() {
+    _selectedCourtSlots.clear();
     notifyListeners();
   }
 
   void setPlan(String plan, {String subPlan = '1 Year'}) {
+    _selectedPlan = plan;
+    _selectedSubPlan = subPlan;
+    notifyListeners();
+  }
+
+  void setSelectedPlan(String plan, String subPlan) {
     _selectedPlan = plan;
     _selectedSubPlan = subPlan;
     notifyListeners();
@@ -171,6 +254,14 @@ class BookingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void onboardUser({required String name, required String mobile, required String email}) {
+    _profileName = name;
+    _profileMobile = mobile;
+    _profileEmail = email;
+    _isOnboarded = true;
+    notifyListeners();
+  }
+
   void updateProfile({required String name, required String mobile, required String email}) {
     _profileName = name;
     _profileMobile = mobile;
@@ -178,153 +269,65 @@ class BookingProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void toggleCourtSlot(String slotKey) {
-    if (_selectedCourtSlots.contains(slotKey)) {
-      _selectedCourtSlots.remove(slotKey);
-    } else {
-      if (_selectedCourtSlots.length < 3) {
-        _selectedCourtSlots.add(slotKey);
-      }
-    }
+  void saveProfile({required String name, required String mobile, required String email}) {
+    _profileName = name;
+    _profileMobile = mobile;
+    _profileEmail = email;
+    _isOnboarded = true;
+    _activeMembership = 'Gold Annual Pass';
+    _memberId = 'DUSA-2026-9842';
     notifyListeners();
   }
 
-  void clearSelectedSlots() {
-    _selectedCourtSlots.clear();
+  void toggleAdminMode() {
+    _isAdminMode = !_isAdminMode;
     notifyListeners();
   }
 
-  void configureCalculator({
-    bool? gym,
-    int? months,
-    bool? swimming,
-    bool? coaching,
-    bool? sauna,
-  }) {
-    if (gym != null) _includeGym = gym;
-    if (months != null) _gymMonths = months;
-    if (swimming != null) _includeSwimming = swimming;
-    if (coaching != null) _includeCoaching = coaching;
-    if (sauna != null) _includeSauna = sauna;
+  void setAdminDateFilter(String filter) {
+    _adminDateFilter = filter;
     notifyListeners();
   }
 
-  double calculateCustomPrice() {
-    double total = 0.0;
-    if (_includeGym) {
-      if (_gymMonths == 1) total += 3000;
-      else if (_gymMonths == 3) total += 5999;
-      else if (_gymMonths == 6) total += 9999;
-      else if (_gymMonths == 12) total += 15999;
-    }
-    if (_includeSwimming) total += 10000;
-    if (_includeCoaching) total += 30000;
-    if (_includeSauna) total += 5000;
-    return total;
-  }
-
-  void submitEnquiry({
-    required String name,
-    required String mobile,
-    required String email,
-    required String source,
-  }) {
-    final newEnquiry = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'name': name,
-      'mobile': mobile,
-      'email': email.isEmpty ? 'N/A' : email,
-      'source': source,
-      'plan': _selectedPlan,
-      'subPlan': _selectedSubPlan,
-      'slots': _selectedCourtSlots.toList(),
-      'customCalculatorPrice': _selectedPlan == 'Custom Builder' ? calculateCustomPrice() : null,
-      'timestamp': DateTime.now(),
-      'status': 'Pending Reply',
-    };
-    _enquiries.add(newEnquiry);
+  void sendMessage(String text) {
+    _chatMessages.add({'sender': 'user', 'text': text});
     notifyListeners();
   }
 
-  // Café operations
-  void addCafeItem(String name) {
-    _cafeCart[name] = (_cafeCart[name] ?? 0) + 1;
-    notifyListeners();
-  }
-
-  void removeCafeItem(String name) {
-    if (_cafeCart.containsKey(name)) {
-      if (_cafeCart[name] == 1) {
-        _cafeCart.remove(name);
-      } else {
-        _cafeCart[name] = _cafeCart[name]! - 1;
-      }
-      notifyListeners();
-    }
-  }
-
-  void clearCafeCart() {
-    _cafeCart.clear();
-    notifyListeners();
-  }
-
-  void placeCafeOrder(String scheduleTime) {
-    if (_cafeCart.isEmpty) return;
-    
-    final newOrder = {
-      'id': 'CAF-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
-      'items': Map<String, int>.from(_cafeCart),
-      'time': scheduleTime,
-      'timestamp': DateTime.now(),
-      'status': 'Preparing',
-    };
-    _cafeOrders.add(newOrder);
-    _cafeCart.clear();
+  void addChatMessage(String sender, String text) {
+    _chatMessages.add({'sender': sender, 'text': text});
     notifyListeners();
   }
 
   void incrementGymStreak() {
-    _gymStreak++;
-    if (_gymStreak == 10) {
-      _unlockedBadges.add('10-Day Streak');
-    }
+    _gymStreak += 1;
     notifyListeners();
   }
 
   void incrementBadmintonStreak() {
-    _badmintonStreak++;
+    _badmintonStreak += 1;
     notifyListeners();
   }
 
-  void sendMessage(String message) {
-    if (message.trim().isEmpty) return;
-    
-    _chatMessages.add({'sender': 'user', 'text': message});
+  void purchaseMembership({String? plan, String? duration, String? planName, String? subPlanName}) {
+    final String p = plan ?? planName ?? _selectedPlan;
+    final String d = duration ?? subPlanName ?? _selectedSubPlan;
+    _activeMembership = '$p ($d)';
+    _selectedPlan = p;
+    _selectedSubPlan = d;
     notifyListeners();
+  }
 
-    Future.delayed(const Duration(milliseconds: 600), () {
-      String responseText = "Thank you for reaching out! For slot bookings, pricing plans, or café orders, please feel free to submit an Enquiry or check out the respective tabs.";
-      
-      final msgLower = message.toLowerCase();
-      if (msgLower.contains('gold') || msgLower.contains('price')) {
-        responseText = "Our Gold membership costs ₹30,000/yr inclusive of GST. It includes full access to the Gym, Swimming Pool, Zumba classes, Ice Bath, and Steam & Infrared Sauna Bath.";
-      } else if (msgLower.contains('tamil') || msgLower.contains('வணக்கம்') || msgLower.contains('nalam')) {
-        responseText = "வணக்கம்! DUSA விளையாட்டு அகாடமிக்கு உங்களை வரவேற்கிறோம். உங்களுக்கு என்ன உதவி தேவை? பேட்மிண்டன் கோர்ட், நீச்சல் குளம் அல்லது ஜிம் பற்றி கேட்கலாம்.";
-      } else if (msgLower.contains('badminton') || msgLower.contains('court') || msgLower.contains('coaching')) {
-        responseText = "DUSA features 4 premium indoor wooden badminton courts. Coaching is ₹2,500/month for kids and adults, with batches from 6:00 AM to 9:00 PM.";
-      } else if (msgLower.contains('gym') || msgLower.contains('fitness') || msgLower.contains('workout')) {
-        responseText = "Our Gym packages start at ₹3,000 for 1 month, up to ₹15,999 for a full year. Gym hours are 5:00 AM - 10:00 PM daily. We use premium Evost machines.";
-      } else if (msgLower.contains('cafe') || msgLower.contains('smoothie') || msgLower.contains('food') || msgLower.contains('shake')) {
-        responseText = "Aadukalam Café inside DUSA offers nutritious shakes, high-protein foods, and refreshing hydration drinks. You can pre-order via the Bookings/Café tab to have it ready post-workout!";
-      } else if (msgLower.contains('pool') || msgLower.contains('swim') || msgLower.contains('swimming')) {
-        responseText = "Our well-maintained pool is open for kids and adults. Swim packages are ₹10,000/year, or you can register for seasonal coaching batches.";
-      } else if (msgLower.contains('sauna') || msgLower.contains('recovery') || msgLower.contains('steam')) {
-        responseText = "Our Recovery Zone features Steam Bath, Infrared Sauna, and Ice Bath Hydrotherapy to help ease muscle soreness and reduce fatigue.";
-      }
-      
-      _chatMessages.add({'sender': 'ai', 'text': responseText});
-      notifyListeners();
+  void submitEnquiry({String? name, String? mobile, String? phone, String? category, String? note, String? email, String? source}) {
+    _enquiries.insert(0, {
+      'id': 'ENQ-${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}',
+      'name': name ?? _profileName,
+      'phone': mobile ?? phone ?? _profileMobile,
+      'category': category ?? 'General',
+      'note': note ?? '',
+      'date': 'Today',
+      'status': 'Pending',
     });
+    notifyListeners();
   }
 }
-

@@ -727,7 +727,15 @@ class _CheckoutPaymentDialogState extends State<CheckoutPaymentDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Member Name:', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
-                  Text(provider.profileName, style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      provider.profileName,
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -735,7 +743,15 @@ class _CheckoutPaymentDialogState extends State<CheckoutPaymentDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Active Plan:', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
-                  Text('${widget.planName} (${widget.duration})', style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${widget.planName} (${widget.duration})',
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFFFF4C00)),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 8),
@@ -743,7 +759,15 @@ class _CheckoutPaymentDialogState extends State<CheckoutPaymentDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Member ID:', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
-                  Text(provider.memberId, style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      provider.memberId,
+                      textAlign: TextAlign.end,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
+                    ),
+                  ),
                 ],
               ),
             ],

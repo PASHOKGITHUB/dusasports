@@ -7,6 +7,7 @@ import 'facilities_hub_screen.dart';
 import 'ai_concierge_screen.dart';
 import 'dusa_play_screen.dart';
 import 'profile_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -85,6 +86,10 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<BookingProvider>(context);
+
+    if (provider.isAdminMode) {
+      return const AdminDashboardScreen();
+    }
 
     final List<Widget> pages = [
       HomeScreen(onCategoryTap: _navigateToTab),
